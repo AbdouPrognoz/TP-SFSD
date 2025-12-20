@@ -35,16 +35,7 @@ int main()
         switch(choice) {
             case 1: // Initial Load
                 printf("\n--- CREATE NEW FILE ---\n");
-                printf("Enter loading factor (0.0 to 1.0): ");
-                scanf("%f", &loadingFactor);
-                getchar();
-                
-                if (loadingFactor <= 0.0 || loadingFactor > 1.0) {
-                    printf("Invalid loading factor! Using default 0.8\n");
-                    loadingFactor = 0.8;
-                }
-                
-                initialLoad(&file, loadingFactor);
+                initialLoad(&file);
                 printf("File created successfully!\n");
                 break;
 

@@ -20,6 +20,7 @@ typedef struct Header
 {
     int nb_block;
     int nb_rec;
+    int blockCapacity;    // Effective records per block (MAX_RECORDS * loadingFactor)
 }Header;
 
 typedef struct TnOF
@@ -42,7 +43,7 @@ int writeBlock(TnOF file, int i, Tblock buf); // Write block
 
 void allocateBlock(TnOF *file); // Allocate a new block
 
-void initialLoad(TnOF *file, float loadingFactor); // Initialize the file with loading factor (0.0 to 1.0)
+void initialLoad(TnOF *file); // Initialize the file with loading factor (prompted inside)
 
 void displayTnOF(const char *file_name); // Display the TOF
 

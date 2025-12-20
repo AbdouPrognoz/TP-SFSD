@@ -50,6 +50,8 @@ int getHeader(TnOF file, int i) //--- Return the value of the ith header attribu
             return file.header.nb_block; //--- 1st attribute ---//
         case 2:
             return file.header.nb_rec; //--- 2nd attribute ---//
+        case 3:
+            return file.header.blockCapacity; //--- 3rd attribute: block capacity ---//
         default:
             return 0;
     }
@@ -64,7 +66,7 @@ void allocateBlock(TnOF *file) //--- Allocate a new block in the file ---//
     file->header.nb_block++;
 }
 
-void initialLoad(TnOF *file, float loadingFactor) //--- Create a new file and initialize it ---//
+void initialLoad(TnOF *file) //--- Create a new file and initialize it ---//
 {
     char name[20];
     printf("Enter the name of the file to create: ");
@@ -72,21 +74,37 @@ void initialLoad(TnOF *file, float loadingFactor) //--- Create a new file and in
     getchar();
     open(file, name, 'n');
 
+    // Display max records info and get loading factor
+    printf("Maximum records per block: %d\n", MAX_RECORDS);
+    printf("Enter loading factor (0.0 to 1.0): ");
+    float loadingFactor;
+    scanf("%f", &loadingFactor);
+    getchar();
+    
+    if (loadingFactor <= 0.0 || loadingFactor > 1.0) {
+        printf("Invalid loading factor! Using default 0.8\n");
+        loadingFactor = 0.8;
+    }
+
     // Calculate effective block capacity based on loading factor
     int blockCapacity = (int)(MAX_RECORDS * loadingFactor);
     if (blockCapacity < 1) blockCapacity = 1; // At least 1 record per block
+    file->header.blockCapacity = blockCapacity; // Store in header
+    printf("Effective records per block: %d\n", blockCapacity);
 
-    int numRecords, i = 0, j = 0;
-    printf("Enter the number of records for the file: ");
+    int numBlocks, i = 0, j = 0;
+    printf("Enter the number of blocks to create: ");
     do
     {
-        scanf("%d", &numRecords);
+        scanf("%d", &numBlocks);
         getchar();
-    } while(numRecords < 0);
+    } while(numBlocks < 1);
+
+    int numRecords = numBlocks * blockCapacity; // Total records = blocks × capacity
 
     Tblock buf;
     buf.nb_rec = 0;
-    printf("\nProceed with data entry:\n");
+    printf("\nProceed with data entry (%d records total):\n", numRecords);
     while(i < numRecords)
     {
         if((j + 1) <= blockCapacity) //--- Use loading factor capacity instead of MAX_RECORDS ---//
@@ -141,7 +159,8 @@ void searchTnOF(const int key, const char *filename,int *found, int *i, int *j)
         }
     }
     //in case the the record should be in a new bloc
-    if(*j>=MAX_RECORDS){
+    int blockCapacity = getHeader(file, 3);
+    if(*j >= blockCapacity){
         *i=*i+1;
         *j=0;
     }
