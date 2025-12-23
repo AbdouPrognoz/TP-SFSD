@@ -10,7 +10,9 @@ void printMenu() {
     printf("3. Search for a record\n");
     printf("4. Insert a record\n");
     printf("5. Delete a record (Physical)\n");
-    printf("6. Exit\n");
+    printf("6. Partition file (Hash into K fragments)\n");
+    printf("7. Display a partition\n");
+    printf("8. Exit\n");
     printf("================================================\n");
     printf("Enter your choice: ");
 }
@@ -76,7 +78,43 @@ int main()
                 deleteTnOFphy(file_name, key);
                 break;
 
-            case 6: // Exit
+            case 6: // Partition
+                printf("\n--- PARTITION FILE ---\n");
+                printf("Will partition file: %s\n", file_name);
+                int K, M;
+                printf("Enter K (number of fragments, must be >= 4): ");
+                scanf("%d", &K);
+                getchar();
+                
+                if (K < 4) {
+                    printf("Invalid K! Must be >= 4 (so valid M can exist)\n");
+                    break;
+                }
+                
+                printf("Enter M (number of buffers, must be > 2 and < %d): ", K);
+                scanf("%d", &M);
+                getchar();
+                
+                if (M <= 2 || M >= K) {
+                    printf("Invalid M! Must be 2 < M < K (so M can be 3 to %d)\n", K-1);
+                } else {
+                    partition(file_name, K, M);
+                }
+                break;
+
+            case 7: // Display partition
+                printf("\n--- DISPLAY PARTITION ---\n");
+                int partNum;
+                printf("Enter partition number (0 to K-1): ");
+                scanf("%d", &partNum);
+                getchar();
+                
+                char partName[30];
+                sprintf(partName, "partition%d", partNum);
+                displayTnOF(partName);
+                break;
+
+            case 8: // Exit
                 printf("Exiting program. Goodbye!\n");
                 break;
 
@@ -84,8 +122,7 @@ int main()
                 printf("Invalid choice! Please try again.\n");
         }
 
-    } while(choice != 6);
+    } while(choice != 8);
 
     return 0;
 }
-

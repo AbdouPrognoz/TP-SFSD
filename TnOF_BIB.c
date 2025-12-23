@@ -43,7 +43,7 @@ int writeBlock(TnOF file, int i, Tblock buf) //--- Write a block to the file at 
 }
 
 int getHeader(TnOF file, int i) //--- Return the value of the ith header attribute ---//
-{                                //--- Adapted for all types except float due to size incompatibility ---//
+{                           
     switch(i)
     {
         case 1:
@@ -163,7 +163,7 @@ void searchTnOF(const int key, const char *filename,int *found, int *i, int *j)
     if(*j >= blockCapacity){
         *i=*i+1;
         *j=0;
-    }
+    } 
 
     close (file);
 }
@@ -259,6 +259,119 @@ void displayTnOF(const char *filename){
         i++;
     }
     close(file);
+}
+
+
+int hash(int key , int k)
+{
+return (key % k);
+}
+
+
+void partition(const char *sourceFile, int K, int M) {
+    // Step 1: Calculate number of passes needed
+    int passes = (K + M - 2) / (M - 1);  // ceiling of K/(M-1)
+    printf("Partitioning into %d fragments using %d buffers\n", K, M);
+    printf("Number of passes required: %d\n", passes);
+
+    // Step 2: Get blockCapacity and the nbBlocks from source file
+    TnOF srcFile;
+    open(&srcFile, sourceFile, 'o');
+    if (srcFile.f == NULL) {
+        printf("Error: Could not open source file '%s'\n", sourceFile);
+        return;
+    }
+    int blockCapacity = getHeader(srcFile, 3);
+    int nbBlocks = getHeader(srcFile, 1);
+    printf("Source file: %d blocks, blockCapacity=%d\n", nbBlocks, blockCapacity);
+    close(srcFile);
+    
+    if (nbBlocks == 0) {
+        printf("Error: Source file is empty!\n");
+        return;
+    }    
+
+    // Step 3: Create K empty fragment files with same blockCapacity
+    char filename[30];
+    for (int i = 0; i < K; i++) {
+        sprintf(filename, "partition%d", i);
+        TnOF fragFile;
+        open(&fragFile, filename, 'n');
+        fragFile.header.blockCapacity = blockCapacity;  // we work as if the fragmented file has the Same capacity as source
+        close(fragFile);
+    }
+
+    // Step 4: Multi-pass algorithm
+    for (int pass = 0; pass < passes; pass++) {
+        // 4a: Calculate fragment range for this pass
+        int startFragment = pass * (M - 1);
+        int endFragment = startFragment + (M - 2);
+        if (endFragment >= K) endFragment = K - 1;
+        
+        int numBuffers = endFragment - startFragment + 1;  // actual number of fragments in this pass
+        printf("\nPass %d: Processing fragments %d to %d (%d buffers)\n", pass + 1, startFragment, endFragment, numBuffers);
+
+        // 4b: Initialize output buffers for this pass
+        Tblock outputBuffers[numBuffers];
+        for (int i = 0; i < numBuffers; i++) {
+            outputBuffers[i].nb_rec = 0;
+        }
+
+        // 4c: Open source file and read all blocks
+        open(&srcFile, sourceFile, 'o');
+        
+        for (int blockNum = 1; blockNum <= nbBlocks; blockNum++) {
+            Tblock inputBuffer;
+            readBlock(srcFile, blockNum, &inputBuffer);
+
+            // 4d: Process each record in the block
+            for (int j = 0; j < inputBuffer.nb_rec; j++) {
+                Record rec = inputBuffer.T[j];
+                int hashValue = hash(rec.key, K);
+
+                // Check if this record belongs to current pass
+                if (hashValue >= startFragment && hashValue <= endFragment) {
+                    int bufferIndex = hashValue - startFragment;
+
+                    // Add record to the appropriate output buffer
+                    outputBuffers[bufferIndex].T[outputBuffers[bufferIndex].nb_rec] = rec;
+                    outputBuffers[bufferIndex].nb_rec++;
+
+                    // If buffer is full, write to fragment file
+                    if (outputBuffers[bufferIndex].nb_rec >= blockCapacity) {
+                        sprintf(filename, "partition%d", hashValue);
+                        TnOF fragFile;
+                        open(&fragFile, filename, 'o');
+                        allocateBlock(&fragFile);
+                        writeBlock(fragFile, fragFile.header.nb_block, outputBuffers[bufferIndex]);
+                        fragFile.header.nb_rec += outputBuffers[bufferIndex].nb_rec;
+                        close(fragFile);
+
+                        // Reset buffer
+                        outputBuffers[bufferIndex].nb_rec = 0;
+                    }
+                }
+            }
+        }
+        
+        close(srcFile);
+
+        // 4e: Flush remaining non-empty buffers
+        for (int i = 0; i < numBuffers; i++) {
+            if (outputBuffers[i].nb_rec > 0) {
+                int fragIndex = startFragment + i;
+                sprintf(filename, "partition%d", fragIndex);
+                TnOF fragFile;
+                open(&fragFile, filename, 'o');
+                allocateBlock(&fragFile);
+                writeBlock(fragFile, fragFile.header.nb_block, outputBuffers[i]);
+                fragFile.header.nb_rec += outputBuffers[i].nb_rec;
+                close(fragFile);
+            }
+        }
+    }
+
+    printf("\nPartitioning complete! Created %d fragment files.\n", K);
 }
 
 

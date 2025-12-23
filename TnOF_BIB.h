@@ -53,5 +53,9 @@ void inserTnOF(const char *filename, Record record); // Insert a record
 
 void deleteTnOFphy(const char *filename, int key); // Physical deletion
 
+int hash(int key , int k); // Hash function
+
+void partition(const char *sourceFile , int k , int M) ; // the main partitioning function  // multi pass solution
+
 
 #endif // _BIBLIO_TOF_H
