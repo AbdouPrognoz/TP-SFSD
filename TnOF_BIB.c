@@ -375,3 +375,62 @@ void partition(const char *sourceFile, int K, int M) {
 }
 
 
+
+
+void searchPartitioned(const int key, int K, int *found, int *i, int *j) {
+    // Step 1: Calculate which partition this key belongs to using hash
+    int partitionNum = hash(key, K);
+    
+    // Step 2: Generate the partition filename
+    char filename[30];
+    sprintf(filename, "partition%d", partitionNum);
+    
+    // Step 3: Search within that specific partition
+    searchTnOF(key, filename, found, i, j);
+    
+    printf("Searched in partition %d for key %d\n", partitionNum, key);
+}
+
+void insertPartitioned(Record record, int K) {
+    // Step 1: Calculate which partition this record belongs to
+    int partitionNum = hash(record.key, K);
+    
+    // Step 2: Generate the partition filename
+    char filename[30];
+    sprintf(filename, "partition%d", partitionNum);
+    
+    // Step 3: Check if partition file exists and is accessible
+    TnOF testFile;
+    open(&testFile, filename, 'o');
+    if (testFile.f == NULL) {
+        printf("Error: Partition %d does not exist. Please partition the file first.\n", partitionNum);
+        return;
+    }
+    close(testFile);
+    
+    // Step 4: Insert the record into the appropriate partition
+    printf("Inserting into partition %d...\n", partitionNum);
+    inserTnOF(filename, record);
+}
+
+void deletePartitioned(int key, int K) {
+    // Step 1: Calculate which partition this key belongs to
+    int partitionNum = hash(key, K);
+    
+    // Step 2: Generate the partition filename
+    char filename[30];
+    sprintf(filename, "partition%d", partitionNum);
+    
+    // Step 3: Check if partition file exists
+    TnOF testFile;
+    open(&testFile, filename, 'o');
+    if (testFile.f == NULL) {
+        printf("Error: Partition %d does not exist. Please partition the file first.\n", partitionNum);
+        return;
+    }
+    close(testFile);
+    
+    // Step 4: Delete the record from the appropriate partition
+    printf("Deleting from partition %d...\n", partitionNum);
+    deleteTnOFphy(filename, key);
+}

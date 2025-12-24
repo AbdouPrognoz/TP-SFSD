@@ -57,5 +57,10 @@ int hash(int key , int k); // Hash function
 
 void partition(const char *sourceFile , int k , int M) ; // the main partitioning function  // multi pass solution
 
+void searchPartitioned(const int key, int K, int *found, int *i, int *j); // search for a record within the new structure
+
+void insertPartitioned(Record record, int K); //insert a record into the new structure
+
+void deletePartitioned(int key, int K); //delete a record from the new structure
 
 #endif // _BIBLIO_TOF_H
