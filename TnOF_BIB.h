@@ -20,7 +20,7 @@ typedef struct Header
 {
     int nb_block;
     int nb_rec;
-    int blockCapacity;    // Effective records per block (MAX_RECORDS * loadingFactor)
+    int blockCapacity;   
 }Header;
 
 typedef struct TnOF
@@ -29,29 +29,32 @@ typedef struct TnOF
     Header header;
 }TnOF;
 
+// classic functions
+void open(TnOF *file, const char *filename, const char mode);
 
-void open(TnOF *file, const char *filename, const char mode); // Open a file
+void close(TnOF file); 
 
-void close(TnOF file); // Close a file
+int getHeader(TnOF file, int i); 
 
-int getHeader(TnOF file, int i); // Get header information
+int readBlock(TnOF file, int i, Tblock *buf); 
 
-int readBlock(TnOF file, int i, Tblock *buf); // Read block
+int writeBlock(TnOF file, int i, Tblock buf); 
 
-int writeBlock(TnOF file, int i, Tblock buf); // Write block
+void allocateBlock(TnOF *file); 
 
 
-void allocateBlock(TnOF *file); // Allocate a new block
+// classic tnof funcitons
+void initialLoad(TnOF *file); 
 
-void initialLoad(TnOF *file); // Initialize the file with loading factor (prompted inside)
+void displayTnOF(const char *file_name); 
 
-void displayTnOF(const char *file_name); // Display the TOF
+void searchTnOF(const int key, const char *filename, int *found, int *i, int *j); 
 
-void searchTnOF(const int key, const char *filename, int *found, int *i, int *j); // Search in the TOF
+void inserTnOF(const char *filename, Record record); 
 
-void inserTnOF(const char *filename, Record record); // Insert a record
+void deleteTnOFphy(const char *filename, int key); 
 
-void deleteTnOFphy(const char *filename, int key); // Physical deletion
+// TP funcitons
 
 int hash(int key , int k); // Hash function
 
@@ -63,4 +66,4 @@ void insertPartitioned(Record record, int K); //insert a record into the new str
 
 void deletePartitioned(int key, int K); //delete a record from the new structure
 
-#endif // _BIBLIO_TOF_H
+#endif 

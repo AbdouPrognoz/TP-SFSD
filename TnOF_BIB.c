@@ -2,14 +2,14 @@
 #include <stdlib.h>
 #include "TnOF_BIB.h"
 
-void open(TnOF *file, const char *filename, const char mode) //--- Opening a file ---//
+void open(TnOF *file, const char *filename, const char mode) 
 {
-    if (mode == 'o') //--- Open in old mode ---//
+    if (mode == 'o')
     {
         file->f = fopen(filename, "rb+");
         fread(&(file->header), sizeof(Header), 1, file->f);
     }
-    else //--- Open in new mode with header initialization ---//
+    else 
     {
         file->f = fopen(filename, "wb+");
         file->header.nb_block = 0;
@@ -18,7 +18,7 @@ void open(TnOF *file, const char *filename, const char mode) //--- Opening a fil
     }
 }
 
-void close(TnOF file) //--- Close a file and save the header ---//
+void close(TnOF file) 
 {
     rewind(file.f);
     fwrite(&(file.header), sizeof(Header), 1, file.f);
@@ -26,38 +26,37 @@ void close(TnOF file) //--- Close a file and save the header ---//
     file.f = NULL;
 }
 
-int readBlock(TnOF file, int i, Tblock *buf) //--- Read the block at position i from a file into a buffer ---//
+int readBlock(TnOF file, int i, Tblock *buf)
 {
-    if ((i > file.header.nb_block) || (i < 1)) return 0; //--- Stop reading if the block does not exist ---//
+    if ((i > file.header.nb_block) || (i < 1)) return 0; 
     fseek(file.f, sizeof(Header) + (i - 1) * sizeof(Tblock), 0);
     fread(buf, sizeof(Tblock), 1, file.f);
     return 1;
 }
 
-int writeBlock(TnOF file, int i, Tblock buf) //--- Write a block to the file at the ith position ---//
+int writeBlock(TnOF file, int i, Tblock buf) 
 {
-    if ((i > file.header.nb_block) || (i < 1)) return 0; //--- Stop writing if the position does not exist ---//
+    if ((i > file.header.nb_block) || (i < 1)) return 0; 
     fseek(file.f, sizeof(Header) + (i - 1) * sizeof(Tblock), 0);
     fwrite(&buf, sizeof(Tblock), 1, file.f);
     return 0;
 }
 
-int getHeader(TnOF file, int i) //--- Return the value of the ith header attribute ---//
-{                           
+int getHeader(TnOF file, int i) {
     switch(i)
     {
         case 1:
-            return file.header.nb_block; //--- 1st attribute ---//
-        case 2:
-            return file.header.nb_rec; //--- 2nd attribute ---//
+            return file.header.nb_block; 
+        case 2:   
+            return file.header.nb_rec; 
         case 3:
-            return file.header.blockCapacity; //--- 3rd attribute: block capacity ---//
+            return file.header.blockCapacity; 
         default:
             return 0;
     }
 }
 
-void allocateBlock(TnOF *file) //--- Allocate a new block in the file ---//
+void allocateBlock(TnOF *file) 
 {
     Tblock newBlock;
     newBlock.nb_rec = 0;
@@ -175,24 +174,39 @@ void inserTnOF(const char *filename, Record record) //--- Procedure to insert a 
     TnOF file;
     Tblock buffer;
 
-    searchTnOF(record.key, filename,&found, &i, &j); //--- Searching for the record in the file ---//
-
-    if (found==0)
-    {
-        open(&file, filename, 'o');
-
-        if(i>getHeader(file,1)) allocateBlock(&file); //if the last block is full allocate a new one
-
-        readBlock(file, i, &buffer);
-        buffer.T[j]=record;
-        buffer.nb_rec++;
-        writeBlock(file,i,buffer);
-        file.header.nb_rec++;
-
-        close(file);
-        printf("Your record has been added successfully\n");
+    // Find insertion position (don't check for duplicates)
+    open(&file, filename, 'o');
+    int nbBlocks = getHeader(file, 1);
+    int blockCapacity = getHeader(file, 3);
+    
+    if (nbBlocks == 0) {
+        // Empty file - insert at block 1, position 0
+        i = 1;
+        j = 0;
+    } else {
+        // Read last block to find insertion position
+        readBlock(file, nbBlocks, &buffer);
+        if (buffer.nb_rec < blockCapacity) {
+            // Space in last block
+            i = nbBlocks;
+            j = buffer.nb_rec;
+        } else {
+            // Need new block
+            i = nbBlocks + 1;
+            j = 0;
+        }
     }
-    else printf("Your record already exists in the file\n");
+
+    if (i > nbBlocks) allocateBlock(&file); // Allocate new block if needed
+
+    readBlock(file, i, &buffer);
+    buffer.T[j] = record;
+    buffer.nb_rec++;
+    writeBlock(file, i, buffer);
+    file.header.nb_rec++;
+
+    close(file);
+    printf("Your record has been added successfully\n");
 }
 
 
