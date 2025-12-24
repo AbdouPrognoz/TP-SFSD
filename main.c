@@ -11,11 +11,12 @@ void printMenu() {
     printf("4. Insert a record\n");
     printf("5. Delete a record (Physical)\n");
     printf("6. Partition file (Hash into K fragments)\n");
-    printf("7. Display a partition\n");
-    printf("8. Search in the partitioned file\n");
-    printf("9. Insert into  the partitioned file\n");
-    printf("10. Delete from the partitioned file\n");
-    printf("11. Exit\n");
+    printf("7. Display a single partition\n");
+    printf("8. Display all partitions\n");
+    printf("9. Search in the partitioned file\n");
+    printf("10. Insert into the partitioned file\n");
+    printf("11. Delete from the partitioned file\n");
+    printf("12. Exit\n");
     printf("================================================\n");
     printf("Enter your choice: ");
 }
@@ -105,8 +106,8 @@ int main()
                 }
                 break;
 
-            case 7: // Display partition
-                printf("\n--- DISPLAY PARTITION ---\n");
+            case 7: // Display single partition
+                printf("\n--- DISPLAY SINGLE PARTITION ---\n");
                 int partNum;
                 printf("Enter partition number (0 to K-1): ");
                 scanf("%d", &partNum);
@@ -117,7 +118,21 @@ int main()
                 displayTnOF(partName);
                 break;
 
-            case 8: // Search in the partitioned file
+            case 8: // Display all partitions
+                printf("\n--- DISPLAY ALL PARTITIONS ---\n");
+                printf("Enter K (number of partitions): ");
+                scanf("%d", &K);
+                getchar();
+                
+                for (int p = 0; p < K; p++) {
+                    printf("\n========== PARTITION %d ==========\n", p);
+                    char pName[30];
+                    sprintf(pName, "partition%d", p);
+                    displayTnOF(pName);
+                }
+                break;
+
+            case 9: // Search in the partitioned file
                 printf("\n--- SEARCH IN PARTITIONED FILE ---\n");
                 printf("Enter K (number of partitions used): ");
                 scanf("%d", &K);
@@ -135,7 +150,7 @@ int main()
                     printf("Record with key %d not found. Can be inserted at block %d, position %d\n", key, i, j);
                 break;
 
-            case 9: // Insert into the partitioned file
+            case 10: // Insert into the partitioned file
                 printf("\n--- INSERT INTO PARTITIONED FILE ---\n");
                 printf("Enter K (number of partitions): ");
                 scanf("%d", &K);
@@ -148,7 +163,7 @@ int main()
                 insertPartitioned(rec, K);
                 break;
 
-            case 10: // Delete from the partitioned file
+            case 11: // Delete from the partitioned file
                 printf("\n--- DELETE FROM PARTITIONED FILE ---\n");
                 printf("Enter K (number of partitions): ");
                 scanf("%d", &K);
@@ -161,7 +176,7 @@ int main()
                 deletePartitioned(key, K);
                 break;    
 
-            case 11: // Exit
+            case 12: // Exit
                 printf("Exiting program.\n");
                 break;
 
@@ -169,7 +184,7 @@ int main()
                 printf("Invalid choice! Please try again.\n");
         }
 
-    } while(choice != 11);
+    } while(choice != 12);
 
     return 0;
 }
